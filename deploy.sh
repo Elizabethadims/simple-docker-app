@@ -81,20 +81,56 @@ log "🔐 Testing SSH connection..."
 ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 "$SSH_USER@$SERVER_IP" 'echo "SSH connected ✅"' || error_exit "SSH connection failed."
 
 
-# ===== 5️⃣ Prepare Remote Environment =====
-log "🧰 Preparing remote environment..."
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
-  set -e
-  sudo apt update -y
-  sudo apt install -y docker.io docker-compose nginx
-  sudo usermod -aG docker \$USER || true
-  sudo systemctl enable docker nginx
-  sudo systemctl start docker nginx
-  docker --version
-  docker-compose --version
-  nginx -v
+# ===== 5️⃣ Prepare Remote Environment (Robust Docker + Alias) =====
+log "🧰 Preparing remote environment with Docker, Compose, and Nginx..."
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
+    set -e
+
+    echo "🔄 Updating system packages..."
+    sudo apt update -y
+    sudo apt upgrade -y
+
+    echo "📦 Installing prerequisites..."
+    sudo apt install -y ca-certificates curl gnupg lsb-release
+
+    echo "🗝️ Adding Docker GPG key..."
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    echo "📥 Adding Docker stable repository..."
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    echo "🔄 Updating package index..."
+    sudo apt update -y
+
+    echo "🐳 Installing Docker Engine, Compose plugin, and Nginx..."
+    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin nginx
+
+    echo "👥 Adding current user to Docker group..."
+    sudo usermod -aG docker $USER || true
+
+    echo "🚀 Enabling and starting Docker and Nginx services..."
+    sudo systemctl enable docker nginx
+    sudo systemctl start docker nginx
+
+    echo "🔗 Setting up docker-compose alias for compatibility..."
+    if ! grep -q 'alias docker-compose=' ~/.bashrc; then
+        echo "alias docker-compose='docker compose'" >> ~/.bashrc
+        source ~/.bashrc
+    fi
+
+    echo "✅ Versions check:"
+    docker --version
+    docker compose version
+    docker-compose version || true
+    nginx -v
 EOF
-log "✅ Remote environment prepared."
+
+log "✅ Remote environment prepared successfully."
+
 
 
 # ===== 6️⃣ Deploy Dockerized Application =====
