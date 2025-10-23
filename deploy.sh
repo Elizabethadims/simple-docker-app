@@ -135,15 +135,26 @@ log "✅ Remote environment prepared successfully."
 
 # ===== 6️⃣ Deploy Dockerized Application =====
 log "🚚 Copying project files to remote server..."
+
+# 🧩 Ensure rsync is installed on the remote server before transferring files
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "sudo apt update -y && sudo apt install rsync -y"
+
+# 🔄 Copy project files to the remote server
 rsync -avz -e "ssh -i $SSH_KEY" ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
 
 log "⚙️ Building and running Docker container remotely..."
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
   set -e
   cd ~/$REPO_NAME
+
   echo "🧹 Removing any old container named myapp..."
   docker stop myapp || true
   docker rm myapp || true
+
+  # 🧩 Compatibility for Docker Compose v2
+  if ! command -v docker-compose &> /dev/null; then
+    alias docker-compose='docker compose'
+  fi
 
   # 🧱 Auto-detect docker-compose.yml
   if [ -f "docker-compose.yml" ]; then
@@ -156,6 +167,7 @@ ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
     docker run -d -p $APP_PORT:$APP_PORT --name myapp myapp:latest
   fi
 EOF
+
 log "✅ Application deployed successfully."
 
 
