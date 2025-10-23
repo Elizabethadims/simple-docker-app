@@ -159,7 +159,7 @@ EOF
 log "✅ Application deployed successfully."
 
 
-# ===== 7️⃣ Configure Nginx Reverse Proxy =====
+# ===== 7️⃣ Configure Nginx Reverse Proxy =====***
 log "🌐 Configuring Nginx reverse proxy..."
 NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
 
