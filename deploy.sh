@@ -81,7 +81,7 @@ log "🔐 Testing SSH connection..."
 ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 "$SSH_USER@$SERVER_IP" 'echo "SSH connected ✅"' || error_exit "SSH connection failed."
 
 
-# ===== 5️⃣ Prepare Remote Environment (Robust Docker + Alias) =====
+# ===== 5️⃣ Prepare Remote Environment (Robust Docker + Alias) ===== 
 log "🧰 Preparing remote environment with Docker, Compose, and Nginx..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
     set -e
@@ -93,9 +93,10 @@ ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
     echo "📦 Installing prerequisites..."
     sudo apt install -y ca-certificates curl gnupg lsb-release
 
-    echo "🗝️ Adding Docker GPG key..."
+    echo "🗝️ Adding Docker GPG key (non-interactive mode)..."
     sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+      sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 
     echo "📥 Adding Docker stable repository..."
     echo \
