@@ -149,30 +149,22 @@ log "🔍 Verifying Dockerfile presence on remote server..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "test -f /home/$SSH_USER/$REPO_NAME/Dockerfile && echo '✅ Dockerfile found on server.' || echo '❌ Dockerfile missing — check file paths.'"
 
 log "⚙️ Building and running Docker container remotely..."
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
-  set -e
-  cd ~/$REPO_NAME
 
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" << EOF
+  cd /home/$SSH_USER/$REPO_NAME || exit 1
   echo "🧹 Removing any old container named myapp..."
-  docker stop myapp || true
-  docker rm myapp || true
+  docker rm -f myapp 2>/dev/null || true
 
-  # 🧩 Compatibility for Docker Compose v2
-  if ! command -v docker-compose &> /dev/null; then
-    alias docker-compose='docker compose'
-  fi
-
-  # 🧱 Auto-detect docker-compose.yml
-  if [ -f "docker-compose.yml" ]; then
-    echo "🧱 docker-compose.yml detected — using Docker Compose..."
-    docker-compose down || true
-    docker-compose up -d --build
+  if [ -f docker-compose.yml ]; then
+    echo "🐳 Using docker-compose..."
+    docker compose up -d --build
   else
-    echo "🐳 No docker-compose.yml found — using Dockerfile build..."
-    docker build -t myapp:latest .
-    docker run -d -p $APP_PORT:$APP_PORT --name myapp myapp:latest
+    echo "🐳 Building using Dockerfile..."
+    docker build -t myapp .
+    docker run -d --name myapp -p $APP_PORT:$APP_PORT myapp
   fi
 EOF
+
 
 
 # ===== 7️⃣ Configure Nginx Reverse Proxy =====***
