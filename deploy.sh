@@ -140,8 +140,16 @@ log "🚚 Copying project files to remote server..."
 # 🧩 Ensure rsync is installed on the remote server before transferring files
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "sudo apt update -y && sudo apt install rsync -y"
 
-# 🔄 Copy project files to the remote server
-rsync -avz -e "ssh -i $SSH_KEY" ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+log "🚚 Copying project files to remote server (using scp fallback)..."
+
+# Use rsync if available, else fall back to scp
+if command -v rsync &> /dev/null; then
+  rsync -avz -e "ssh -i $SSH_KEY" ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+else
+  log "⚠️ rsync not found — using scp instead..."
+  scp -i "$SSH_KEY" -r ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+fi
+
 
 log "⚙️ Building and running Docker container remotely..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
