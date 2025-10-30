@@ -167,26 +167,27 @@ EOF
 
 
 
-# ===== 7️⃣ Configure Nginx Reverse Proxy =====***
+# ===== 7️⃣ Configure Nginx Reverse Proxy =====
 log "🌐 Configuring Nginx reverse proxy..."
 NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
 
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" sudo bash <<'EOF'
-cat > /etc/nginx/sites-available/myapp.conf <<NGINX
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
+sudo tee $NGINX_CONF > /dev/null <<NGINX
 server {
     listen 80;
     server_name _;
 
     location / {
-        proxy_pass http://localhost:5000;  # or your APP_PORT
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://localhost:$APP_PORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 NGINX
-sudo ln -sf /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
+
+sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 EOF
 
