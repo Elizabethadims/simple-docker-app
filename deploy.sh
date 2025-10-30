@@ -208,7 +208,7 @@ EOF
 log "✅ Validation complete."
 
 
-# ===== 9️⃣ Logging and Error Handling =====
+# ===== 9️⃣ Logging and Error Handling =======
 log "📜 All actions logged in $LOG_FILE"
 
 
