@@ -171,7 +171,7 @@ EOF
 log "🌐 Configuring Nginx reverse proxy..."
 NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
 
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" sudo bash <<EOF
 sudo tee $NGINX_CONF > /dev/null <<NGINX
 server {
     listen 80;
@@ -190,6 +190,7 @@ NGINX
 sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 EOF
+
 
 log "✅ Nginx configured to forward HTTP → Docker container."
 
