@@ -137,19 +137,11 @@ log "✅ Remote environment prepared successfully."
 # ===== 6️⃣ Deploy Dockerized Application =====
 log "🚚 Copying project files to remote server..."
 
-# 🧩 Ensure rsync is installed on the remote server before transferring files
-ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "sudo apt update -y && sudo apt install rsync -y"
+# 🚚 Copying project files to remote server using SCP
+log "🚚 Copying project files to remote server..."
 
-log "🚚 Copying project files to remote server (using scp fallback)..."
-
-# Use rsync if available, else fall back to scp
-if command -v rsync &> /dev/null; then
-  rsync -avz -e "ssh -i $SSH_KEY" ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
-else
-  log "⚠️ rsync not found — using scp instead..."
-  scp -i "$SSH_KEY" -r ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
-fi
-
+# Use SCP to transfer all project files
+scp -i "$SSH_KEY" -r ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
 
 log "⚙️ Building and running Docker container remotely..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
