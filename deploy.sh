@@ -141,7 +141,8 @@ log "🚚 Copying project files to remote server..."
 log "🚚 Copying project files to remote server..."
 
 # Use SCP to transfer all project files
-scp -i "$SSH_KEY" -r ./ "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+scp -i "$SSH_KEY" -r * "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+scp -i "$SSH_KEY" .env "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME" 2>/dev/null || true
 
 log "⚙️ Building and running Docker container remotely..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
