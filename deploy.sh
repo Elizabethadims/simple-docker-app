@@ -137,12 +137,16 @@ log "✅ Remote environment prepared successfully."
 # ===== 6️⃣ Deploy Dockerized Application =====
 log "🚚 Copying project files to remote server..."
 
-# 🚚 Copying project files to remote server using SCP
-log "🚚 Copying project files to remote server..."
+# 🧩 Create target directory if not exists
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "mkdir -p /home/$SSH_USER/$REPO_NAME"
 
-# Use SCP to transfer all project files
-scp -i "$SSH_KEY" -r * "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
-scp -i "$SSH_KEY" .env "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME" 2>/dev/null || true
+# 🧩 Copy entire project including hidden files (.env, .dockerignore, etc.)
+scp -i "$SSH_KEY" -r "$PWD"/* "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME"
+scp -i "$SSH_KEY" -r "$PWD"/.[!.]* "$SSH_USER@$SERVER_IP:/home/$SSH_USER/$REPO_NAME" 2>/dev/null || true
+
+# 🧠 Verify that Dockerfile exists on remote server
+log "🔍 Verifying Dockerfile presence on remote server..."
+ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" "test -f /home/$SSH_USER/$REPO_NAME/Dockerfile && echo '✅ Dockerfile found on server.' || echo '❌ Dockerfile missing — check file paths.'"
 
 log "⚙️ Building and running Docker container remotely..."
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
@@ -169,8 +173,6 @@ ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<'EOF'
     docker run -d -p $APP_PORT:$APP_PORT --name myapp myapp:latest
   fi
 EOF
-
-log "✅ Application deployed successfully."
 
 
 # ===== 7️⃣ Configure Nginx Reverse Proxy =====***
