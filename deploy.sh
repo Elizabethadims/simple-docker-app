@@ -166,11 +166,53 @@ ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" << EOF
 EOF
 
 
+# # ===== 7️⃣ Configure Nginx Reverse Proxy =====
+# log "🌐 Configuring Nginx reverse proxy..."
+# NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
+
+# ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" sudo bash <<EOF
+# sudo tee $NGINX_CONF > /dev/null <<'NGINX'
+# server {
+#     listen 80;
+#     server_name _;
+
+#     location / {
+#         proxy_pass http://localhost:$APP_PORT;
+#         proxy_set_header Host \$host;
+#         proxy_set_header X-Real-IP \$remote_addr;
+#         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto \$scheme;
+#     }
+# }
+# NGINX
+
+# sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
+# sudo nginx -t && sudo systemctl reload nginx
+# EOF
+
+
+# log "✅ Nginx configured to forward HTTP → Docker container."
+
+
+# # ===== 8️⃣ Validate Deployment =====
+# log "🩺 Validating deployment..."
+# ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" bash <<EOF
+#   set -e
+#   echo "Checking Docker and Nginx status..."
+#   docker ps
+#   sudo systemctl status nginx --no-pager
+#   echo "Testing application endpoint..."
+#   curl -I localhost || true
+# EOF
+
+# log "✅ Validation complete."
+
 # ===== 7️⃣ Configure Nginx Reverse Proxy =====
 log "🌐 Configuring Nginx reverse proxy..."
 NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
 
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" sudo bash <<EOF
+# Write app config
 sudo tee $NGINX_CONF > /dev/null <<'NGINX'
 server {
     listen 80;
@@ -186,13 +228,15 @@ server {
 }
 NGINX
 
+# Disable default Nginx site and enable app
+sudo rm -f /etc/nginx/sites-enabled/default
 sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
+
+# Test config and reload
 sudo nginx -t && sudo systemctl reload nginx
 EOF
 
-
 log "✅ Nginx configured to forward HTTP → Docker container."
-
 
 # ===== 8️⃣ Validate Deployment =====
 log "🩺 Validating deployment..."
