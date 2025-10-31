@@ -166,13 +166,12 @@ ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" << EOF
 EOF
 
 
-
 # ===== 7️⃣ Configure Nginx Reverse Proxy =====
 log "🌐 Configuring Nginx reverse proxy..."
 NGINX_CONF="/etc/nginx/sites-available/myapp.conf"
 
 ssh -i "$SSH_KEY" "$SSH_USER@$SERVER_IP" sudo bash <<EOF
-sudo tee $NGINX_CONF > /dev/null <<NGINX
+sudo tee $NGINX_CONF > /dev/null <<'NGINX'
 server {
     listen 80;
     server_name _;
